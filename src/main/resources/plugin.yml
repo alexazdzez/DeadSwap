@@ -5,9 +5,10 @@ main: fr.na.tcharlex.deadswap.Main
 commands:
   DSs:
     description: start deadswap
-    aliases:
-      - dss
     permission: ds.use
   DSog:
     description: change bool OnGame
+    permission: ds.use
+  DSready:
+    description: ready for tp
     permission: ds.use

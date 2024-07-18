@@ -1,7 +1,7 @@
 package fr.na.tcharlex.deadswap;
 
+import org.bukkit.ChatColor;
 import org.bukkit.World;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,6 +11,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class Listeners implements Listener {
 
@@ -26,15 +27,21 @@ public class Listeners implements Listener {
         if (main.onGame) {
             player.kickPlayer("Il y a une partie en cours.");
         } else {
+            event.setJoinMessage("["+ ChatColor.GREEN +"+"+ ChatColor.RESET+"] "+player.getName());
             player.sendMessage("Bienvenue sur ce serveur DeadSwap");
         }
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent event){
+        Player player = event.getPlayer();
+        event.setQuitMessage("["+ ChatColor.RED +"-"+ ChatColor.RESET+"] "+player.getName());
+    }
+
+    @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player) {
-            if (event instanceof EntityDamageByEntityEvent) {
-                EntityDamageByEntityEvent damageByEntityEvent = (EntityDamageByEntityEvent) event;
+            if (event instanceof EntityDamageByEntityEvent damageByEntityEvent) {
                 Entity damager = damageByEntityEvent.getDamager();
 
                 if (damager instanceof Player) {
@@ -83,6 +90,9 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
         World world = player.getWorld();
         player.setInvulnerable(false);
-        world.setTime(0);
+        world.setTime(6000);
+        //world.spawnEntity(player.getLocation(), EntityType.TNT);                trainé = -TNT
+        //world.spawnEntity(player.getLocation(), EntityType.ARROW);                       -flèche
+        //world.spawnEntity(player.getLocation(), EntityType.LIGHTNING_BOLT);              -éclaire
     }
 }

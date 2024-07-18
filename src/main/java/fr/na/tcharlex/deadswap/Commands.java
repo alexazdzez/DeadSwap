@@ -15,8 +15,7 @@ public class Commands implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("DSs")) {
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
+            if (sender instanceof Player player) {
                 if (main.onGame) {
                     player.sendMessage("Une partie est déjà en cours.");
                 } else {
@@ -31,6 +30,13 @@ public class Commands implements CommandExecutor {
             main.onGame = !main.onGame;
             sender.sendMessage("État du jeu : " + (main.onGame ? "En cours" : "Arrêté"));
             return true;
+        } else if (cmd.getName().equalsIgnoreCase("DSready")) {
+            if (sender instanceof Player player) {
+                if (main.onGame && !main.ready_players.contains(player)) {
+                    main.ready_players.add(player);
+                    main.deadSwap.checkReady(main);
+                }
+            }
         }
 
         return false;
