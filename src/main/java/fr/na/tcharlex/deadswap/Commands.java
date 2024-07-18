@@ -13,27 +13,23 @@ public class Commands implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String msg, String[] args) {
-
-        if(cmd.getName().equalsIgnoreCase("DSstart")){
-            if(sender instanceof Player){
-            Player player = (Player) sender;
-            main.deadSwap = new DeadSwap(player, main);
-            main.onGame = true;
-            }
-
-            else {
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("DSs")) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (main.onGame) {
+                    player.sendMessage("Une partie est déjà en cours.");
+                } else {
+                    main.onGame = true;
+                    main.deadSwap = new DeadSwap(player, main);
+                }
+            } else {
                 sender.sendMessage("Il faut être un joueur pour démarrer une partie.");
             }
             return true;
-        }
-        else if (cmd.getName().equalsIgnoreCase("DSongame")) {
-            if (main.onGame){
-                main.onGame = false;
-            }
-            else{
-                main.onGame = true;
-            }
+        } else if (cmd.getName().equalsIgnoreCase("DSog")) {
+            main.onGame = !main.onGame;
+            sender.sendMessage("État du jeu : " + (main.onGame ? "En cours" : "Arrêté"));
             return true;
         }
 
