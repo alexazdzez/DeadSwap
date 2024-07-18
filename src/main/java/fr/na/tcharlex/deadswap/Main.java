@@ -6,5 +6,7 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         System.out.println("parfait !!");
+        getCommand("DSstart").setExecutor(new Commands());
+        getServer().getPluginManager().registerEvents(new Listeners(), this);
     }
 }

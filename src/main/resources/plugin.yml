@@ -2,3 +2,9 @@ name: DeadSwap
 version: 1.0
 api-version: 1.21
 main: fr.na.tcharlex.deadswap.Main
+commands:
+  dsstart:
+    description: start deadswap
+    aliases:
+      - dss
+    permission: ds.use
