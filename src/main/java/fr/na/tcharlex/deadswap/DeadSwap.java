@@ -36,7 +36,6 @@ public class DeadSwap {
 
     private void readyPlayer(Player player) {
         player.sendMessage("Un nouveau DeadSwap va commencer, soyez prêts !");
-        player.getInventory().clear();
         player.setGameMode(GameMode.SURVIVAL);
         player.setHealth(player.getMaxHealth());
         player.setFoodLevel(20);
