@@ -3,8 +3,11 @@ version: 1.0
 api-version: 1.21
 main: fr.na.tcharlex.deadswap.Main
 commands:
-  dsstart:
+  DSstart:
     description: start deadswap
     aliases:
       - dss
+    permission: ds.use
+  DSongame:
+    description: change bool OnGame
     permission: ds.use
