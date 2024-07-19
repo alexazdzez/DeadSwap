@@ -1,5 +1,6 @@
 package fr.na.tcharlex.deadswap;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -19,6 +20,8 @@ public class Commands implements CommandExecutor {
                 if (main.onGame) {
                     player.sendMessage("Une partie est déjà en cours.");
                 } else {
+                    main.players.clear(); // Clear the player list to start fresh
+                    main.players.addAll(Bukkit.getOnlinePlayers()); // Initialize players with online players
                     main.onGame = true;
                     main.deadSwap = new DeadSwap(player, main);
                 }
@@ -37,8 +40,8 @@ public class Commands implements CommandExecutor {
                     main.deadSwap.checkReady(main);
                 }
             }
+            return true;
         }
-
         return false;
     }
 }

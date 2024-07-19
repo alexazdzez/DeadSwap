@@ -12,27 +12,31 @@ public class DeadSwap {
 
     private final Main plugin;
     private final List<Player> dead_players = new ArrayList<>();
-    private final List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
-    private final int min_players = 2;
+    public final int min_players = 2;
     private final Map<Player, Integer> playerAirLevels = new HashMap<>();
+    private BukkitRunnable preparationTask;
     private BukkitRunnable task;
 
     public DeadSwap(Player player, Main main) {
         this.plugin = main;
 
-        if (players.size() < min_players) {
-            player.sendMessage("Désolé, tu es tout seul.");
-            Bukkit.broadcastMessage("La partie est annulée, il n'y a pas assez de joueurs.");
-            return;
+        if (!main.onGame) {
+            if (main.players.size() < min_players) {
+                player.sendMessage("Désolé, il n'y a pas assez de joueurs.");
+                Bukkit.broadcastMessage("La partie est annulée, il n'y a pas assez de joueurs.");
+                return;
+            }
+
+            player.sendMessage("Tu es le Chef de ce DeadSwap");
+
+            for (Player p : main.players) {
+                readyPlayer(p);
+            }
+
+            preparationPhase();
+        } else {
+            player.sendMessage("Il y a déjà une partie en cours.");
         }
-
-        player.sendMessage("Tu es le Chef de ce DeadSwap");
-
-        for (Player p : players) {
-            readyPlayer(p);
-        }
-
-        prepareForSwap();
     }
 
     private void readyPlayer(Player player) {
@@ -43,23 +47,35 @@ public class DeadSwap {
         player.setSaturation(10);
     }
 
-    private void prepareForSwap() {
-        new BukkitRunnable() {
+    private void preparationPhase() {
+        preparationTask = new BukkitRunnable() {
             @Override
             public void run() {
-                startSwapTask();
+                if (task != null) {
+                    task.cancel();
+                }
+                if (plugin.onGame) {
+                    startSwapTask();
+                } else {
+                    forceFinish(plugin);
+                }
             }
-        }.runTaskLater(plugin, 60 * 20L); // 1 minute en ticks (20 ticks = 1 seconde)
+        };
+        preparationTask.runTaskLater(plugin, 60 * 20L); // 1 minute en ticks (20 ticks = 1 seconde)
     }
 
     private void startSwapTask() {
         task = new BukkitRunnable() {
             @Override
             public void run() {
-                startCountdown();
+                if (plugin.onGame) {
+                    startCountdown();
+                } else {
+                    forceFinish(plugin);
+                }
             }
         };
-        task.runTaskTimer(plugin, 0L, 2 * 60 * 20L); // 2 minutes en ticks (20 ticks = 1 seconde)
+        task.runTaskTimer(plugin, 0L, 2 * 60 * 20L); // Toutes les 2 minutes en ticks (20 ticks = 1 seconde)
     }
 
     private void startCountdown() {
@@ -69,78 +85,104 @@ public class DeadSwap {
             @Override
             public void run() {
                 if (countdown > 0) {
-                    Bukkit.broadcastMessage("Téléportation dans " + countdown + "...");
+                    Bukkit.broadcastMessage("Téléportation dans " + countdown + " secondes...");
                     countdown--;
                 } else {
                     this.cancel();
-                    swapPlayers();
+                    if (plugin.onGame) {
+                        swapPlayers();
+                    } else {
+                        forceFinish(plugin);
+                    }
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L); // 20 ticks = 1 seconde
     }
 
     private void swapPlayers() {
-        if (players.size() < min_players) {
-            Bukkit.broadcastMessage("La partie est annulée, il n'y a pas assez de joueurs.");
-            task.cancel();
-            return;
-        }
+        if (plugin.onGame) {
+            for (Player p : plugin.players) {
+                playerAirLevels.put(p, p.getRemainingAir());
+            }
 
-        for (Player p : players) {
-            playerAirLevels.put(p, p.getRemainingAir());
-        }
+            List<Location> locations = new ArrayList<>();
+            for (Player p : plugin.players) {
+                locations.add(p.getLocation());
+            }
 
-        List<Location> locations = new ArrayList<>();
-        for (Player p : players) {
-            locations.add(p.getLocation());
-        }
-
-        boolean positionsSwapped = false;
-        while (!positionsSwapped) {
-            Collections.shuffle(locations);
-            positionsSwapped = true;
-            for (int i = 0; i < players.size(); i++) {
-                if (players.get(i).getLocation().equals(locations.get(i))) {
-                    positionsSwapped = false;
-                    break;
+            boolean positionsSwapped = false;
+            while (!positionsSwapped) {
+                Collections.shuffle(locations);
+                positionsSwapped = true;
+                for (int i = 0; i < plugin.players.size(); i++) {
+                    if (plugin.players.get(i).getLocation().equals(locations.get(i))) {
+                        positionsSwapped = false;
+                        break;
+                    }
                 }
             }
-        }
 
-        for (int i = 0; i < players.size(); i++) {
-            players.get(i).teleport(locations.get(i));
-            players.get(i).sendMessage("Vos positions ont été échangées !");
+            for (int i = 0; i < plugin.players.size(); i++) {
+                plugin.players.get(i).teleport(locations.get(i));
+                plugin.players.get(i).sendMessage("Vos positions ont été échangées !");
 
-            if (playerAirLevels.containsKey(players.get(i))) {
-                players.get(i).setRemainingAir(playerAirLevels.get(players.get(i)));
+                if (playerAirLevels.containsKey(plugin.players.get(i))) {
+                    plugin.players.get(i).setRemainingAir(playerAirLevels.get(plugin.players.get(i)));
+                }
             }
+
+            plugin.ready_players.clear(); // Réinitialiser les joueurs prêts
+        } else {
+            forceFinish(plugin);
         }
     }
 
     public void checkWin(Player player, Main main) {
         player.kickPlayer("Tu es éliminé.");
         dead_players.add(player);
-        players.remove(player);
+        plugin.players.remove(player);
 
-        if (players.size() == 1) {
-            win(main);
+        if (plugin.players.size() == 1) {
+            win();
         }
     }
-    private void win(Main main){
-        Player winner = players.getFirst();
+
+    private void win() {
+        Player winner = plugin.players.get(0);
         Bukkit.broadcastMessage("Félicitation à " + winner.getName() + " qui a gagné la partie de DeadSwap !");
         plugin.onGame = false;
-        main.expChange = true;
+        plugin.expChange = true;
         winner.giveExpLevels(1);
-        task.cancel();
+        if (task != null) {
+            task.cancel();
+        }
+        if (preparationTask != null) {
+            preparationTask.cancel();
+        }
+        plugin.ready_players.clear();
+        dead_players.clear();
     }
 
     public void checkReady(Main main) {
-        Bukkit.broadcastMessage(main.ready_players.size() + " est prêt sur : " + players);
-        if(players.size() == main.ready_players.size()){
-            task.cancel();
-            startSwapTask();
-            swapPlayers();
+        Bukkit.broadcastMessage(plugin.ready_players.size() + " joueur(s) est/sont prêt(s) sur : " + plugin.players.size());
+        if (plugin.players.size() == plugin.ready_players.size()) {
+            if (task != null) {
+                task.cancel();
+            }
+            startCountdown(); // Démarrer le compte à rebours de 5 secondes
         }
+    }
+
+    public void forceFinish(Main main) {
+        plugin.onGame = false;
+        Bukkit.broadcastMessage("Une erreur nous a obligé à terminer la partie.\n Redémarrez le serveur ou faites /dss pour recommencer la partie.");
+        if (task != null) {
+            task.cancel();
+        }
+        if (preparationTask != null) {
+            preparationTask.cancel();
+        }
+        plugin.ready_players.clear();
+        dead_players.clear();
     }
 }

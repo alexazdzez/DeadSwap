@@ -11,7 +11,8 @@ public class Main extends JavaPlugin {
     public boolean onGame = false;
     public DeadSwap deadSwap;
     public boolean expChange = false;
-    public final List<Player> ready_players = new ArrayList<>();
+    public List<Player> ready_players = new ArrayList<>();
+    public final List<Player> players = new ArrayList<>();
 
     @Override
     public void onEnable() {

@@ -2,6 +2,10 @@ name: DeadSwap
 version: 1.0
 api-version: 1.21
 main: fr.na.tcharlex.deadswap.Main
+prefix: [DS]
+description: A plugin for DeadSwap mini-game
+author: tcharlex
+website: zertou-frais.inertiacreeps.net
 commands:
   DSs:
     description: start deadswap

@@ -1,17 +1,12 @@
 package fr.na.tcharlex.deadswap;
 
 import org.bukkit.ChatColor;
-import org.bukkit.World;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerExpChangeEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 public class Listeners implements Listener {
 
@@ -27,42 +22,29 @@ public class Listeners implements Listener {
         if (main.onGame) {
             player.kickPlayer("Il y a une partie en cours.");
         } else {
-            event.setJoinMessage("["+ ChatColor.GREEN +"+"+ ChatColor.RESET+"] "+player.getName());
+            event.setJoinMessage("[" + ChatColor.GREEN + "+" + ChatColor.RESET + "] " + player.getName());
             player.sendMessage("Bienvenue sur ce serveur DeadSwap");
         }
     }
 
     @EventHandler
-    public void onQuit(PlayerQuitEvent event){
+    public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        event.setQuitMessage("["+ ChatColor.RED +"-"+ ChatColor.RESET+"] "+player.getName());
+        event.setQuitMessage("[" + ChatColor.RED + "-" + ChatColor.RESET + "] " + player.getName());
+
+        if (main.players.contains(player)) {
+            main.players.remove(player);
+
+            if (main.onGame && main.players.size() < main.deadSwap.min_players) {
+                main.deadSwap.forceFinish(main);
+            }
+        }
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player) {
-            if (event instanceof EntityDamageByEntityEvent damageByEntityEvent) {
-                Entity damager = damageByEntityEvent.getDamager();
-
-                if (damager instanceof Player) {
-                    event.setCancelled(true);
-                    return;
-                }
-
-                if (damager instanceof Monster) {
-                    event.setCancelled(true);
-                    return;
-                }
-
-                if (damager instanceof Projectile && ((Projectile) damager).getShooter() instanceof Monster) {
-                    event.setCancelled(true);
-                    return;
-                }
-
-                if (damager instanceof Projectile && ((Projectile) damager).getShooter() instanceof Player) {
-                    event.setCancelled(true);
-                }
-            }
+            event.setCancelled(true); // Empêcher les dégâts
         }
     }
 
@@ -84,15 +66,24 @@ public class Listeners implements Listener {
         }
     }
 
-    //jour infine(boucle)
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        World world = player.getWorld();
         player.setInvulnerable(false);
-        world.setTime(6000);
-        //world.spawnEntity(player.getLocation(), EntityType.TNT);                trainé = -TNT
-        //world.spawnEntity(player.getLocation(), EntityType.ARROW);                       -flèche
-        //world.spawnEntity(player.getLocation(), EntityType.LIGHTNING_BOLT);              -éclaire
+        player.getWorld().setTime(6000);
+    }
+
+    @EventHandler
+    public void onBedEnter(PlayerBedEnterEvent event){
+        if(main.onGame){
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void on(PlayerGameModeChangeEvent event){
+        if (main.onGame){
+            event.setCancelled(true);
+        }
     }
 }
