@@ -1,4 +1,4 @@
-package fr.na.tcharlex.deadswap;
+package fr.na.mpxp.deadswap;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;

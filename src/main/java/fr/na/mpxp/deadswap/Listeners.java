@@ -1,4 +1,4 @@
-package fr.na.tcharlex.deadswap;
+package fr.na.mpxp.deadswap;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
